@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'chat_app/css/styles.css' %}">
+    <script src="{% static 'chat_app/js/chat.js' %}"></script>
+</head>
+<body>
+    <h1>Chat</h1>
+    <div id="chats">
+        <div>
+            {{ messages }}
+        </div>    
+          <ul>
+        {% for message in messages %}
+            <li>
+                <strong>{{ message.text }}</strong>
+                <ul>
+                    {% for response in message.responses.all %}
+                        <li class="text">{{ response.text }}</li>
+                    {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+    </div>
+    <input type="text" id="message" placeholder="Type your message">
+    <button onclick="sendMessage()">Send</button>
+    <script>
+        const text  = document.querySelector('.text').innerHTML
+        console.log('text',text)
+    </script> 
+</body>
+</html></html>
