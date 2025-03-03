@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <style>
+    body {
+      width: 300px;
+      padding: 10px;
+      font-family: pt mono;
+      background: linear-gradient(135deg, rgba(22, 161, 161, 0.737), rgba(88, 13, 238, 0.737));
+    }
+    /* Custom scrollbar styles */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #4636f0b3;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #580dee;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #1ee5e5f7;
+    }
+    .controls-group {
+      border: 1px solid #b5afafd2;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .buttons-grid {
+      display: grid;
+      grid-template-columns: 9fr 1fr 1fr;
+      gap: 8px;
+    }
+    .full-width {
+      grid-column: 1 / -1;
+    }
+    button {
+      padding: 8px;
+      cursor: pointer;
+      border: 1px solid #b5afaf6f;
+      border-radius: 4px;
+      background: #ee409d30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background-color 0.2s;
+      color: white;
+      font-family: pt mono;
+    }
+    button:hover {
+      background: #bc248f8f;
+    }
+    button svg {
+      width: 20px;
+      height: 20px;
+    }
+    .tabs-container {
+      max-height: 200px;
+      overflow-y: auto;
+      margin: 10px 0;
+      border: 1px solid #b5afaf6f;
+      padding: 5px;
+    }
+    .tab-item {
+      display: flex;
+      align-items: center;
+      padding: 5px;
+      border-bottom: 1px solid #b5afaf6f;
+    }
+    .tab-title {
+      flex-grow: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #status {
+      color: #ec8181;
+      background-color: #580deeb9;
+      padding: .3rem;
+      border-radius: 4px;
+      font-size: clamp(12px, 1vw, 16px);
+      margin-top: 10px;
+      text-align: center;
+      position: sticky;
+      bottom: .5rem;
+      display: none;
+    }
+    .tab-btns {
+      display: flex;
+      gap: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls-group">
+    <h3>Playback Controls</h3>
+    <div class="button-grid">
+      <button id="playPause" class="full-width">
+        <svg class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        <svg class="pause-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+          <line x1="6" y1="4" x2="6" y2="20"/>
+          <line x1="18" y1="4" x2="18" y2="20"/>
+        </svg>
+        <span>Play/Pause</span>
+      </button>
+      
+      <button id="skipBackward">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 19l-9-7 9-7v14zm11 0l-9-7 9-7v14z"/>
+        </svg>
+        <span>-10s</span>
+      </button>
+      
+      <button id="skipForward">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 19l9-7-9-7v14zm-11 0l9-7-9-7v14z"/>
+        </svg>
+        <span>+10s</span>
+      </button>
+
+      <button id="mute" class="full-width">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+        <span>Mute</span>
+      </button>
+
+      <button id="speedDown">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M8 12h8"/>
+        </svg>
+        <span>0.75x</span>
+      </button>
+
+      <button id="speedUp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 8v8M8 12h8"/>
+        </svg>
+        <span>1.25x</span>
+      </button>
+
+      <button id="prevVideo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 20L9 12l10-8v16z"/>
+          <line x1="5" y1="19" x2="5" y2="5"/>
+        </svg>
+        <span>Previous</span>
+      </button>
+
+      <button id="nextVideo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 4l10 8-10 8V4z"/>
+          <line x1="19" y1="5" x2="19" y2="19"/>
+        </svg>
+        <span>Next</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="controls-group">
+    <h3>Video Mode</h3>
+    <div class="buttons-grid">
+      <button id="togglePiP">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <rect x="14" y="14" width="7" height="5" rx="1"/>
+        </svg>
+        <span>Picture-in-Picture</span>
+      </button>
+      <button id="download" title="Download video">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="controls-group">
+    <h3>YouTube Tabs</h3>
+    <div id="tabsList" class="tabs-container"></div>
+  </div>
+
+  <div id="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
+
