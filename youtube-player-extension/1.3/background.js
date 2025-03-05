@@ -21,7 +21,30 @@ chrome.commands.onCommand.addListener(async (command) => {
         console.warn(`Unknown command: ${command}`);
     }
   });
+  
+  chrome.runtime.onInstalled.addListener(() => {
+    chrome.storage.local.get(["adBlockEnabled"], (data) => {
+        if (data.adBlockEnabled === undefined) {
+            chrome.storage.local.set({ adBlockEnabled: true }); // Enable by default
+        }
+    });
+  });
 
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (tab.url && tab.url.includes("youtube.com")) {
+        chrome.storage.local.get(["adBlockEnabled"], (data) => {
+            if (data.adBlockEnabled) {
+                chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    func: (enabled) => {
+                        document.dispatchEvent(new CustomEvent("toggleAdBlock", { detail: enabled }));
+                    },
+                    args: [true],
+                });
+            }
+        });
+    }
+});
 
   chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if (request.action === 'createPiPWindow') {
@@ -52,3 +75,29 @@ chrome.commands.onCommand.addListener(async (command) => {
     }
     return true;
   });
+
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "toggleAdBlock") {
+        console.log("Background: Toggling Ad Blocker ->", message.enabled);
+
+        // Update storage (prevents unnecessary looping)
+        chrome.storage.local.set({ adBlockEnabled: message.enabled });
+
+        // Find active YouTube tabs and send message to content script
+        chrome.tabs.query({ url: "*://www.youtube.com/*" }, (tabs) => {
+            tabs.forEach((tab) => {
+                chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    func: (enabled) => {
+                        // Modify the content script's behavior (DO NOT send a message back)
+                        document.dispatchEvent(new CustomEvent("toggleAdBlock", { detail: enabled }));
+                    },
+                    args: [message.enabled],
+                });
+            });
+        });
+
+        sendResponse({ status: "success" });
+    }
+});
+

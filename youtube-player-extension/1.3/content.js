@@ -183,3 +183,56 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+// Function to remove YouTube ads
+function removeAds() {
+  console.log("YouTube Ad Blocker Running...");
+
+  // Remove video ads (skip them)
+  const videoAd = document.querySelector('.ad-showing');
+  if (videoAd) {
+      console.log("Skipping video ad...");
+      const video = document.querySelector('video');
+      if (video) {
+          video.currentTime = video.duration; // Skip the ad
+      }
+  }
+
+  // Remove overlay ads (small ads on the video)
+  document.querySelectorAll('.ytp-ad-overlay-container').forEach(ad => {
+      console.log("Removing overlay ad...");
+      ad.remove();
+  });
+
+  // Remove sidebar and homepage ads
+  document.querySelectorAll(
+      'ytd-ad-slot-renderer, ytd-ad-slot, #player-ads, ytd-companion-slot-renderer'
+  ).forEach(ad => {
+      console.log("Removing sidebar/homepage ad...");
+      ad.remove();
+  });
+}
+
+// Run the ad remover every second to detect new ads
+const adObserver = new MutationObserver(removeAds);
+adObserver.observe(document.body, { childList: true, subtree: true });
+
+// Listen for messages from popup.js to enable/disable ad blocking
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.action === "toggleAdBlock") {
+      if (message.enabled) {
+          console.log("Ad blocking enabled");
+          removeAds();
+          adObserver.observe(document.body, { childList: true, subtree: true });
+      } else {
+          console.log("Ad blocking disabled");
+          adObserver.disconnect(); // Stop observing the DOM
+      }
+  }
+});
+
+// Run once when the script loads
+removeAds();
+
+
+
+

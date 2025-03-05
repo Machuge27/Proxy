@@ -10,7 +10,8 @@
     "storage",
     "system.display",
     "windows",
-    "downloads"
+    "downloads",
+    "scripting"
   ],
   "host_permissions": [
     "*://*.youtube.com/*"
@@ -23,7 +24,10 @@
     }
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon.PNG"
+    }
   },
   "commands": {
     "toggle-play-pause": {
