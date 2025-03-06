@@ -23,3 +23,7 @@ def proxy_request(request):
         return proxy_response
     except requests.exceptions.RequestException as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+@csrf_exempt
+def test(request):
+    return JsonResponse({"message": "Hello, World!"})   
