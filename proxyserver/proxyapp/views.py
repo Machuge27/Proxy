@@ -27,3 +27,4 @@ def proxy_request(request):
 @csrf_exempt
 def test(request):
     return JsonResponse({"message": "Hello, World!"})   
+

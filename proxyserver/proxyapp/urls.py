@@ -6,3 +6,4 @@ urlpatterns = [
     path("proxy/", proxy_request, name='proxy_request'),
     path("test/", test, name='test_request'),
 ]
+
