@@ -1,9 +1,10 @@
 from django.urls import path
 
-from .views import proxy_request, test
+from . import views
 
 urlpatterns = [
-    path("proxy/", proxy_request, name='proxy_request'),
-    path("test/", test, name='test_request'),
+    path('', views.proxy_request, name='proxy'),
+    re_path(r'^(?P<path>.*)$', views.proxy_request, name='proxy_with_path'),
+    path("test/", views.test, name='test_request'),
 ]
 
