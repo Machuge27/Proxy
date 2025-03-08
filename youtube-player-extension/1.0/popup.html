@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      width: 200px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    button {
+      width: 100%;
+      margin: 5px 0;
+      padding: 8px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #f8f8f8;
+    }
+    button:hover {
+      background: #e8e8e8;
+    }
+    #status {
+      color: #666;
+      font-size: 12px;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <button id="playPause">Play/Pause</button>
+  <button id="speedUp">Speed Up (1.25x)</button>
+  <button id="speedDown">Speed Down (0.75x)</button>
+  <button id="skipForward">Skip 10s Forward</button>
+  <button id="skipBackward">Skip 10s Backward</button>
+  <button id="prevVideo">Previous Video</button>
+  <button id="nextVideo">Next Video</button>
+  <div id="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
