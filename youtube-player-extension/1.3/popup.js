@@ -10,10 +10,15 @@ document.addEventListener('DOMContentLoaded', function () {
     'nextVideo': 'Next video',
     'togglePiP': 'Toggle Picture-in-Picture'
   };
-
+  const CATEGORY_CHOICES = [
+    'Gospel', 'Secular', 'Romantic', 'Hip-hop', 'Reggae', 'Rhumba',
+    'Bongo', 'Educational', 'Entertainment', 'Technology',
+    'Science', 'Cooking', 'Other'
+  ];
   const statusEl = document.getElementById('status');
   const tabsList = document.getElementById('tabsList');
   const volumeControlEl = document.getElementById('volumeControl');
+  let selectedCategory = '';
   let currentVolume = 20;
   let isPlaying = false;
 
@@ -43,15 +48,41 @@ document.addEventListener('DOMContentLoaded', function () {
  * @param {string} type - The message type ('error' or 'info')
  * @param {number} duration - Duration in milliseconds before hiding (default: 2000)
  */
-function showMessage(message, type = 'info', duration = 3000) {
+function showMessage(message, type, duration = 3000) {
   // Prepare the message text with prefix for errors
   statusEl.textContent = type === 'error' ? `Error: ${message}` : message;
   
   // Set appropriate class
   statusEl.className = `${type}-message`;
+
+  //add elevant icon
+
+  if (type === 'error') {
+    statusEl.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+      </svg>
+
+      <span>${message}</span>
+    `;
+  } else {
+    statusEl.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+      </svg>
+
+      <span>${message}</span>
+    `;
+
+    // statusEl.insertAdjacentElement('afterbegin', statusEl.firstChild);
+  }
   
   // Show the message
-  statusEl.style.display = 'block';
+  statusEl.style.cssText = `
+    display: flex;
+    flex-direction: row;
+    align-items: center; 
+`;
   
   // Hide after specified duration
   setTimeout(() => {
@@ -276,6 +307,290 @@ function setVolume(volumeLevel) {
   });
 }
 
+// Get bass control element (you'll need to add this to your HTML)
+document.getElementById('bassControl').addEventListener('input', function() {
+  setBass(this.value);
+});
+
+/**
+ * Sets the bass level for the YouTube video using Web Audio API
+ * @param {string|number} bassLevel - The bass level (0-100)
+ */
+function setBass(bassLevel) {
+  // Convert to number
+  const bassValue = parseInt(bassLevel);
+  
+  // Get the active tab
+  chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+    try {
+      const tab = tabs[0];
+      
+      // Check if we're on a YouTube page
+      if (!tab || !tab.url.includes('youtube.com/watch')) {
+        showMessage('Please open a YouTube video', 'error');
+        return;
+      }
+      
+      // Execute script to set bass level on the YouTube player
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        function: (bass) => {
+          // This function runs in the context of the YouTube page
+          try {
+            // Check if our audio context already exists
+            if (!window.ytBassAudioContext) {
+              // Create audio context and nodes if they don't exist
+              const video = document.querySelector('video');
+              if (!video) return false;
+              
+              // Create audio context
+              const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+              
+              // Create source from video element
+              const source = audioCtx.createMediaElementSource(video);
+              
+              // Create bass boost filter (low shelf)
+              const bassFilter = audioCtx.createBiquadFilter();
+              bassFilter.type = 'lowshelf';
+              bassFilter.frequency.value = 150; // Adjust frequency for bass
+              
+              // Connect the nodes: source -> bass filter -> destination
+              source.connect(bassFilter);
+              bassFilter.connect(audioCtx.destination);
+              
+              // Store references globally on the window object
+              window.ytBassAudioContext = audioCtx;
+              window.ytBassFilter = bassFilter;
+              
+              console.log('Bass control initialized');
+            }
+            
+            // Set the bass boost gain
+            // Convert 0-100 to a range appropriate for bass boost (e.g., -10 to 10 dB)
+            const bassGain = (bass - 50) / 5; // Results in -10 to +10 dB
+            window.ytBassFilter.gain.value = bassGain;
+            
+            return true;
+          } catch (error) {
+            console.error('Bass adjustment error:', error);
+            return false;
+          }
+        },
+        args: [bassValue]
+      });
+      
+      // Display the bass level message
+      showMessage(`Bass level set to ${bassValue}%`, 'info');
+      
+    } catch (error) {
+      console.error('Failed to set bass level:', error);
+      showMessage('Failed to set bass level', 'error');
+    }
+  });
+}
+
+document.getElementById('mark').addEventListener('click', async () => {
+  try {
+    // Query the active tab
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    // Ensure the tab is a YouTube video
+    if (!tab || !tab.url.includes('youtube.com/watch')) {
+      showMessage('Please open a YouTube video', 'error');
+      return;
+    }
+    
+    // Open modal first to get category
+    openModal();
+    
+    // The actual marking process will continue after category selection
+  } catch (error) {
+    console.error('Failed to initialize marking process:', error);
+    showMessage('Failed to mark video', 'error');
+  }
+});
+
+// Open modal window for category selection
+function openModal() {
+  const modal = document.getElementById("categoryModal");
+  modal.style.display = "grid";
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+  populateCategories();
+}
+
+// Close modal window
+function closeModal() {
+  document.getElementById("categoryModal").style.display = "none";
+}
+
+// Populate the categories in the modal
+function populateCategories() {
+  const categoryList = document.getElementById("categoryList");
+  categoryList.innerHTML = "";
+  
+  CATEGORY_CHOICES.forEach(category => {
+    const btn = document.createElement("button");
+    btn.classList.add("category-btn");
+    btn.textContent = category;
+    btn.onclick = () => {
+      selectedCategory = category;
+      continueMarkingProcess();
+      closeModal();
+    };
+    categoryList.appendChild(btn);
+  });
+  
+  document.querySelector(".close-btn").onclick = closeModal;
+
+}
+
+// Continue the marking process after category selection
+async function continueMarkingProcess() {
+  try {
+    // Query the active tab again to ensure it's still active
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (!tab || !tab.url.includes('youtube.com/watch')) {
+      showMessage('Please open a YouTube video', 'error');
+      return;
+    }
+    
+    // Execute script to extract video details from the YouTube page
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      function: () => {
+        try {
+          // Get video URL
+          const url = window.location.href;
+          
+          // Get video title
+          const title = document.querySelector('h1.ytd-video-primary-info-renderer')?.textContent.trim() || 
+                       document.title.replace(' - YouTube', '');
+          
+          // Get video duration
+          let duration = '';
+          const durationElement = document.querySelector('.ytp-time-duration');
+          if (durationElement) {
+            duration = durationElement.textContent;
+          }
+          
+          // Get video ID from URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const videoId = urlParams.get('v');
+          
+          // Get current timestamp
+          const currentTime = document.querySelector('.ytp-time-current')?.textContent || '0:00';
+          
+          // Get channel name
+          const channelName = document.querySelector('#owner #text')?.textContent.trim() || 
+                             document.querySelector('#channel-name')?.textContent.trim() || '';
+          
+          return {
+            success: true,
+            data: {
+              url,
+              title,
+              videoId,
+              duration,
+              currentTime,
+              channelName,
+              savedAt: new Date().toISOString()
+            }
+          };
+        } catch (error) {
+          return {
+            success: false,
+            error: error.toString()
+          };
+        }
+      }
+    });
+    
+    // Extract the data from the execution results
+    const videoData = results[0].result;
+    
+    if (!videoData || !videoData.success) {
+      throw new Error(videoData?.error || 'Failed to extract video data');
+    }
+    
+    // Add the selected category to the video data
+    videoData.data.category = selectedCategory;
+    
+    // Log the data that would be sent to backend
+    console.log('Video data captured:', videoData.data);
+
+    // Send the data to the backend
+    const response = await saveVideo(videoData);
+      
+    // Show success message
+    showMessage(response.message || 'Video marked successfully!', 'info');
+    
+    // Change button style to indicate the video is marked
+    const markButton = document.getElementById('mark');
+    markButton.classList.add('marked');
+    markButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+    </svg>
+
+    `;
+    setTimeout(() => {
+      markButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+        </svg>
+      `;
+      markButton.classList.remove('marked');
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Failed to mark video:', error);
+    showMessage(`Failed to mark video: ${error.message}`, 'error');
+  }
+}
+
+// Function to send video data to backend
+async function saveVideo(videoData) {
+  
+  try {
+    // For production, change this URL to your actual backend
+    const API_URL = 'http://192.168.100.6:8000/mark/';
+      
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(videoData.data)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server responded with ${response.status}: ${errorText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error saving video:", error);
+    throw new Error(`Error saving video: ${error.message}`);
+  }
+}
+
+      /*!SECTION
+      {
+    "channelName": "Music Channel",
+    "currentTime": "02:15",
+    "duration": "03:45",
+    "savedAt": "2025-03-09T01:57:00Z",
+    "title": "Title",
+    "url": "https://www.example.com/test-song",
+    "videoId": "abc023xyz",
+    "category": "Gospel"
+}
+      */
+
 });
 
 function updateProgressBar() {
@@ -289,7 +604,7 @@ function updateProgressBar() {
   const info = document.querySelector('.y-info');
   const dateText = document.querySelector('.date');
   progressBarInner.style.width = progress + '%';
-  info.textContent = `${year} is ${progress.toFixed(2)}% complete`;
+  info.textContent = `${year} is ${progress.toFixed(2)}% complete!`;
   dateText.textContent = now.toDateString();
   //progressBarInner.textContent = progress.toFixed(2) + '%';
 }
