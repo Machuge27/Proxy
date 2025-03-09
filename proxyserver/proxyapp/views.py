@@ -4,6 +4,8 @@ import requests
 import logging
 import re
 import json
+import pandas as pd
+from datetime import datetime
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse, quote
 from .models import Song
@@ -315,3 +317,33 @@ def mark(request):
     song.save()
     
     return JsonResponse({"message": "Video marked successfully!"}, status=200)
+
+@csrf_exempt
+def export_songs_csv(request):
+    """
+    Export all songs as a CSV file using pandas
+    """
+    # Query all songs from the database
+    songs = Song.objects.all().values(
+        'id', 
+        'channelName', 
+        'currentTime', 
+        'duration', 
+        'savedAt', 
+        'title', 
+        'url', 
+        'videoId', 
+        'category'
+    )
+    
+    # Convert queryset to pandas DataFrame
+    df = pd.DataFrame(list(songs))
+    
+    # Create HTTP response with CSV
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="songs.csv"'
+    
+    # Write DataFrame to CSV
+    df.to_csv(response, index=False)
+    
+    return response
