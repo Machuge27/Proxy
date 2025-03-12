@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "UK IP Proxy",
+  "version": "1.0",
+  "description": "Redirects traffic through a UK-based proxy server",
+  "permissions": [
+    "storage",
+    "declarativeNetRequest",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.jpg",
+      "48": "images/icon48.jpg",
+      "128": "images/icon128.jpg"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "declarativeNetRequest": {
+    "rule_resources": [{
+      "id": "ruleset_1",
+      "enabled": true,
+      "path": "rules.json"
+    }]
+  },
+  "icons": {
+    "16": "images/icon16.jpg",
+    "48": "images/icon48.jpg",
+    "128": "images/icon128.jpg"
+  }
+}

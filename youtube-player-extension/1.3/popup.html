@@ -103,7 +103,7 @@
         text-overflow: ellipsis;
       }
       #status {
-        background-color: #580deeb9;
+        background-color: #580dee;
         padding: 0.3rem;
         border-radius: 4px;
         font-size: clamp(12px, 1vw, 16px);
@@ -119,7 +119,7 @@
         margin-right: 5px;
       }
       .error-message{
-        color: #ec8181;
+        color: #81ecec;
       }
       .info-message{
         color: #81ecec;
@@ -229,6 +229,21 @@
         text-align: center;   
         justify-content: space-between;
     }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .modal-header-btns {
+      display: flex;
+      gap: 5px;
+    }
+    .modal-header-btns button {
+        background: transparent;
+        border-bottom: none;
+        cursor: pointer;
+        color: white;
+    }
     #categoryList {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -250,13 +265,66 @@
     }
     .close-btn {
         margin: 5px auto;
-        background: rgba(226, 24, 24, 0.805);
+        background: transparent;
+        padding: 0;
+        border: none;
+        margin-top: -15px;
+    }
+    .close-btn:hover {
+        color: rgba(210, 41, 72, 0.669);
+        background-color: transparent;
     }
     .marked {
-      color: green;
+      color: rgb(59, 251, 59);
     }
     .hidden {
       display: none;
+    }
+
+    /*!SECTION
+      Procy service implementation...
+
+
+    */
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0;
+      padding: 0;
+    }
+    input[type="text"] {
+      color: whitesmoke;
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      background-color: transparent;
+      border: none;
+      border: 1px dotted #b5afafd2;
+      border-radius: 15px;
+      margin-top: 3px;
+    }
+
+    input[type="text"]::placeholder {
+      color: #d4d1d1;
+    }
+    .px-status {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    .active {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .inactive {
+      background-color: #f8d7da;
+      color: #721c24;
     }
     </style>
   </head>
@@ -270,6 +338,63 @@
         <div class="progress-bar-inner" id="progress-bar-inner"></div>
       </div>
     </div>
+
+    
+    <div class="controls-group">
+      <h3>Video Mode</h3>
+      <div class="buttons-grid">
+        <button id="togglePiP" title="Picture in Picture">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="2" y="3" width="20" height="14" rx="2" />
+            <rect x="14" y="14" width="7" height="5" rx="1" />
+          </svg>
+          <span>PIPicture</span>
+        </button>
+        <!-- <button id="downloadVideo" title="Download video">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="size-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+            />
+          </svg>
+        </button> -->
+        <button id="mark" title="Save Video">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+          </svg>
+        </button>
+        <button id="copyURL" title="Copy video URL">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="size-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+
     <div class="controls-group">
       <h3>Playback Controls</h3>
       <div class="button-grid">
@@ -388,75 +513,39 @@
         </button>
         <div class="vol full-width">
           <label for="volumeControl">Volume:</label>
-          <input type="range" id="volumeControl" min="0" max="100" value="20" step="1">
+          <input type="range" id="volumeControl" min="0" max="100" value="15" step="1">
         </div>
         <div class="vol full-width">
           <label for="bassControl">Bass:</label> 
-          <input type="range" id="bassControl" min="0" max="100" value="50" step="1">
+          <input type="range" id="bassControl" min="0" max="100" value="80" step="1">
         </div>
       </div>
     </div>
 
-    <div class="controls-group">
-      <h3>Video Mode</h3>
-      <div class="buttons-grid">
-        <button id="togglePiP" title="Picture in Picture">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <rect x="2" y="3" width="20" height="14" rx="2" />
-            <rect x="14" y="14" width="7" height="5" rx="1" />
-          </svg>
-          <span>PIPicture</span>
-        </button>
-        <!-- <button id="downloadVideo" title="Download video">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="size-6"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-            />
-          </svg>
-        </button> -->
-        <button id="mark" title="Save Video">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
-          </svg>
-        </button>
-        <button id="copyURL" title="Copy video URL">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="size-6"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"
-            />
-          </svg>
-        </button>
-      </div>
-    </div>
     <!-- Modal Overlay -->
     <div id="categoryModal" class="ex-modal">
       <div class="modal-content">
+        <div class="modal-header">
           <h3>Select a Category</h3>
+            <span class="modal-header-btns">
+              <button class="downloader" title="Download Playlist">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3" />
+                </svg>                              
+              </button>
+              <button class="playlistManager" title="Player Manager">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>              
+              </button>
+              <button class="category-btn close-btn" title="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>                              
+              </button>
+            </span>
+          </div>
           <div id="categoryList"></div>
-          <button class="category-btn close-btn">Cancel</button>
       </div>
   </div>
     <div class="controls-group">
@@ -472,23 +561,40 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12.75 3.03v.568c0 .334.148.65.405.864l1.068.89c.442.369.535 1.01.216 1.49l-.51.766a2.25 2.25 0 0 1-1.161.886l-.143.048a1.107 1.107 0 0 0-.57 1.664c.369.555.169 1.307-.427 1.605L9 13.125l.423 1.059a.956.956 0 0 1-1.652.928l-.679-.906a1.125 1.125 0 0 0-1.906.172L4.5 15.75l-.612.153M12.75 3.031a9 9 0 0 0-8.862 12.872M12.75 3.031a9 9 0 0 1 6.69 14.036m0 0-.177-.529A2.25 2.25 0 0 0 17.128 15H16.5l-.324-.324a1.453 1.453 0 0 0-2.328.377l-.036.073a1.586 1.586 0 0 1-.982.816l-.99.282c-.55.157-.894.702-.8 1.267l.073.438c.08.474.49.821.97.821.846 0 1.598.542 1.865 1.345l.215.643m5.276-3.67a9.012 9.012 0 0 1-5.276 3.67m0 0a9 9 0 0 1-10.275-4.835M15.75 9c0 .896-.393 1.7-1.016 2.25" />
           </svg>
-          <!--    
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z" />
-</svg>
-
-           -->
           <span>Proxy</span>
         </button>
       </div>
     </div>
 
     <div class="controls-group">
-      <h3>YouTube Tabs</h3>
+      <h3>YouTube Tabs <span id="numOfTabs"></span></h3>
       <div id="tabsList" class="tabs-container"></div>
+    </div>
+    
+    <!-- Proxy -->
+
+    <div class="controls-group">
+      <div class="container">
+        <h3>UK IP Proxy Settings</h3>
+        
+        <div class="toggle">
+          <label for="enabled">Enable Proxy:</label>
+          <input type="checkbox" id="enabled">
+        </div>
+        
+        <div>
+          <label for="proxyUrl">Proxy URL:</label>
+          <input type="text" id="proxyUrl" placeholder="https://yourproxy.example.com/proxy">
+        </div>
+        
+        <button id="save">Save Settings</button>
+        
+        <div id="px-status" class="px-status inactive">Proxy is currently disabled</div>
+      </div>
     </div>
 
     <div id="status"></div>
+
     <script src="popup.js"></script>
   </body>
 </html>

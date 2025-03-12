@@ -1,6 +1,8 @@
 
 // background.js
 let pipWindowId = null;
+let proxyEnabled = false;
+let proxyUrl = "";
 
 chrome.commands.onCommand.addListener(async (command) => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -100,4 +102,65 @@ chrome.commands.onCommand.addListener(async (command) => {
         sendResponse({ status: "success" });
     }
 });
+
+
+/*!SECTION
+  Procy service implementation...
+
+
+*/
+
+// Listen for changes to the proxy settings
+chrome.storage.local.get(['enabled', 'proxyUrl'], function(result) {
+  proxyEnabled = result.enabled || false;
+  proxyUrl = result.proxyUrl || "";
+  console.log("Proxy enabled:", proxyEnabled);
+  console.log("Proxy URL:", proxyUrl);
+});
+
+// Listen for changes to the proxy settings
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+  if (changes.enabled) {
+    proxyEnabled = changes.enabled.newValue;
+    console.log("Proxy enabled changed to:", proxyEnabled);
+  }
+  if (changes.proxyUrl) {
+    proxyUrl = changes.proxyUrl.newValue;
+    console.log("Proxy URL changed to:", proxyUrl);
+  }
+});
+
+// Helper function to determine if a URL should be proxied
+function shouldProxy(url) {
+  // Don't proxy the proxy itself or common browser URLs
+  if (url.startsWith(proxyUrl) || 
+      url.startsWith("chrome://") || 
+      url.startsWith("chrome-extension://") ||
+      url.startsWith("about:") ||
+      url.startsWith("data:")) {
+    return false;
+  }
+  return true;
+}
+
+// Handle requests
+chrome.webRequest.onBeforeRequest.addListener(
+  function(details) {
+    if (!proxyEnabled || !proxyUrl || !shouldProxy(details.url)) {
+      return { cancel: false };
+    }
+
+    // Create the proxied URL
+    const newUrl = `${proxyUrl}?url=${encodeURIComponent(details.url)}`;
+    console.log(`Redirecting ${details.url} to ${newUrl}`);
+    
+    return { redirectUrl: newUrl };
+  },
+  {
+    urls: ["<all_urls>"],
+    types: ["main_frame", "sub_frame", "stylesheet", "script", "image", "font", "object", "xmlhttprequest", "ping", "other"]
+  },
+  ["blocking"]
+);
+
 
