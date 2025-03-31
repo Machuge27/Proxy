@@ -35,4 +35,5 @@ class Song(models.Model):
     url = models.URLField()
     videoId = models.CharField(max_length=100)
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES)
-    
+    # downloaded
+    # n-view

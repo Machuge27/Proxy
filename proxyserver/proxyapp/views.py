@@ -287,7 +287,22 @@ def mark(request):
     Mark a video as watched
     """
     if request.method != 'POST':
-        return JsonResponse({"error": "Method not allowed"}, status=405)
+        # videos = Song.objects.all()
+        # videos_list = list(videos.order_by('-id')[:10].values(
+        videos = Song.objects.all().order_by('-id')
+        videos_list = list(videos.values(
+            'id', 
+            'channelName', 
+            'currentTime', 
+            'duration', 
+            'savedAt', 
+            'title', 
+            'url', 
+            'videoId', 
+            'category'
+        ))
+        return JsonResponse(videos_list, safe=False)
+        # return JsonResponse({"error": "Method not allowed"}, status=405)
     
     # Get the video ID from the request body
     try:
