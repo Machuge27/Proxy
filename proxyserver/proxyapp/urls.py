@@ -19,5 +19,6 @@ urlpatterns = [
     path('test', views.test, name='test'),
     path('options', views.options, name='options'),
     path('mark/', views.mark, name='mark-video'),
+    path('videos/', views.song_list, name='song-list'),
     path('export-songs/', views.export_songs_csv, name='export_songs_csv'),
 ]

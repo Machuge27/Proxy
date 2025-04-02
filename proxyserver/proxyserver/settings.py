@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import dotenv
+import os
+
+# Load environment variables from .env file
+dotenv.load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,10 +25,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-prm8he^v7n(y5ki@obr*$ax@(voz-!j*qxj2^x1s9i_k*hep8t'
+SECRET_KEY = os.getenv("SECRET_KEY", default='django-insecure-prm8he^v7n(y5ki@obr*$ax@(voz-!j*qxj2^x1s9i_k*hep8t')
+
+MONGO_USERNAME = os.getenv("MONGO_USERNAME", default='mutaihillary')
+MONGO_PASSWORD = os.getenv("MONGO_PASSWORD")
+DATABASE_NAME = os.getenv("DATABASE_NAME")
+DEBUG = os.getenv("DEBUG", default=True)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = DEBUG
 
 ALLOWED_HOSTS = ["*"]
 
@@ -81,7 +91,17 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    },
+    'backup': {
+        'ENGINE': 'djongo',
+        'NAME': os.getenv('DATABASE_NAME', 'Youflix'),  # Backup DB name in Atlas
+        'ENABLED': True,
+        'CLIENT': {
+            'host': f'mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@cluster.mongodb.net/{DATABASE_NAME}?retryWrites=true&w=majority',
+            # 'host': 'mongodb+srv://<username>:<password>@cluster.mongodb.net/<dbname>?retryWrites=true&w=majority',
+            # mongodb+srv://mutaihillary:<db_password>@cluster0.ch21p.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+        },
+    }    
 }
 
 

@@ -1,5 +1,6 @@
 from django.http import StreamingHttpResponse, JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
 import requests
 import logging
 import re
@@ -9,6 +10,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse, quote
 from .models import Song
+from .serializers import SongSerializer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -363,3 +365,38 @@ def export_songs_csv(request):
     df.to_csv(response, index=False)
     
     return response
+
+
+def song_list(request):
+    """API Gateway to fetch songs based on filters, search, or sorting."""
+    
+    queryset = Song.objects.all()
+    
+    # Get query parameters
+    filter_type = request.GET.get('filter')
+    search_query = request.GET.get('search')
+    category = request.GET.get('category')
+    channel_name = request.GET.get('channel')
+    
+    # Filtering Logic
+    if filter_type == 'favourites':
+        queryset = queryset.filter(category="Fav")[:20]
+    elif filter_type == 'recently-saved':
+        queryset = queryset.order_by('-savedAt')[:20]
+
+    # Search Logic
+    if search_query:
+        queryset = queryset.filter(
+            Q(title__icontains=search_query) |
+            Q(channelName__icontains=search_query)
+        )
+
+    # Category & Channel Filtering
+    if category:
+        queryset = queryset.filter(category__iexact=category)
+    if channel_name:
+        queryset = queryset.filter(channelName__icontains=channel_name)
+
+    # Serialize and return response
+    serializer = SongSerializer(queryset, many=True)
+    return JsonResponse(serializer.data, safe=False)
