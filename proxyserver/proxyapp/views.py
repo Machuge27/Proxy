@@ -378,6 +378,7 @@ def song_list(request):
     category = request.GET.get('category')
     channel_name = request.GET.get('channel')
     get_details = request.GET.get("details")
+    related_videos = request.GET.get("related")
 
     # Filtering Logic
     if filter_type == 'favourites':
@@ -406,6 +407,56 @@ def song_list(request):
             SongSerializer(video).data if video else {"error": "Video not found"}
         )
         return JsonResponse(response_data, safe=bool(video))
+
+    # TODO a fxn get related videos using the videoId, get the category then all the cideos under that category
+    if related_videos:
+        # Get related videos based on category
+        video_id = related_videos
+        video = Song.objects.filter(videoId=video_id).first()
+        if video:
+            category = video.category
+            queryset = (
+                queryset.filter(category__iexact=category)
+                .exclude(videoId=video_id)
+                .order_by("?")[:24]
+            )  # Return 24 random items
+        else:
+            return JsonResponse({"error": "Video not found"}, status=404)
+
+    # Pagination Logic
+    if not filter_type:
+        page = int(request.GET.get("page", 1))
+        page_size = int(request.GET.get("page_size", 10))
+        start = (page - 1) * page_size
+        end = start + page_size
+        queryset = queryset[start:end]
+        # Sort Logic
+        sort_by = request.GET.get("sort_by")
+        if sort_by:
+            if sort_by == "title":
+                queryset = queryset.order_by("title")
+            elif sort_by == "-title":
+                queryset = queryset.order_by("-title")
+            elif sort_by == "savedAt":
+                queryset = queryset.order_by("savedAt")
+            elif sort_by == "-savedAt":
+                queryset = queryset.order_by("-savedAt")
+            elif sort_by == "duration":
+                queryset = queryset.order_by("duration")
+            elif sort_by == "-duration":
+                queryset = queryset.order_by("-duration")
+            elif sort_by == "channelName":
+                queryset = queryset.order_by("channelName")
+            elif sort_by == "-channelName":
+                queryset = queryset.order_by("-channelName")
+            elif sort_by == "currentTime":
+                queryset = queryset.order_by("currentTime")
+            elif sort_by == "-currentTime":
+                queryset = queryset.order_by("-currentTime")
+            elif sort_by == "category":
+                queryset = queryset.order_by("category")
+            elif sort_by == "-category":
+                queryset = queryset.order_by("-category")
 
     # Serialize and return response
     serializer = SongSerializer(queryset, many=True)
