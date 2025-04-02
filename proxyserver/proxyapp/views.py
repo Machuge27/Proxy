@@ -278,7 +278,7 @@ def proxy_info(request):
         "server_location": "UK",
         "version": "1.0"
     })
-   
+
 @csrf_exempt
 def test(request):
     return JsonResponse({"message": "Hello, World!"})
@@ -369,15 +369,16 @@ def export_songs_csv(request):
 
 def song_list(request):
     """API Gateway to fetch songs based on filters, search, or sorting."""
-    
+
     queryset = Song.objects.all()
-    
+
     # Get query parameters
     filter_type = request.GET.get('filter')
     search_query = request.GET.get('search')
     category = request.GET.get('category')
     channel_name = request.GET.get('channel')
-    
+    get_details = request.GET.get("details")
+
     # Filtering Logic
     if filter_type == 'favourites':
         queryset = queryset.filter(category="Fav")[:20]
@@ -396,6 +397,15 @@ def song_list(request):
         queryset = queryset.filter(category__iexact=category)
     if channel_name:
         queryset = queryset.filter(channelName__icontains=channel_name)
+
+    if get_details:
+        # Get details for a specific video ID
+        video_id = get_details
+        video = Song.objects.filter(videoId=video_id).first()
+        response_data = (
+            SongSerializer(video).data if video else {"error": "Video not found"}
+        )
+        return JsonResponse(response_data, safe=bool(video))
 
     # Serialize and return response
     serializer = SongSerializer(queryset, many=True)
