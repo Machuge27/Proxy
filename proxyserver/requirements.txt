@@ -22,3 +22,4 @@ djongo
 djangorestframework
 pymongo
 django-crontab
+celery[redis]
