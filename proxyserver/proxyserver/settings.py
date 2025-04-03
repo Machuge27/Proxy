@@ -42,14 +42,15 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'proxyapp',
-    'corsheaders',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "proxyapp",
+    "corsheaders",
+    "backup",
 ]
 
 MIDDLEWARE = [
@@ -87,21 +88,21 @@ WSGI_APPLICATION = 'proxyserver.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# mongodb+srv://${username}:${password}@cluster0.ch21p.mongodb.net/taskManagerDB?retryWrites=true&w=majority&appName=Cluster0
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     },
-    'backup': {
-        'ENGINE': 'djongo',
-        'NAME': os.getenv('DATABASE_NAME', 'Youflix'),  # Backup DB name in Atlas
-        'ENABLED': True,
-        'CLIENT': {
-            'host': f'mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@cluster.mongodb.net/{DATABASE_NAME}?retryWrites=true&w=majority',
-            # 'host': 'mongodb+srv://<username>:<password>@cluster.mongodb.net/<dbname>?retryWrites=true&w=majority',
-            # mongodb+srv://mutaihillary:<db_password>@cluster0.ch21p.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+    "backup": {
+        "ENGINE": "djongo",
+        "NAME": "Youflix",  # Ensure this matches your actual database name
+        "ENFORCE_SCHEMA": False,  # Helps with schema issues
+        "CLIENT": {
+            "host": "mongodb+srv://mutaihillary:mutai%2Fatlas25@cluster0.ch21p.mongodb.net/Youflix?retryWrites=true&w=majority&appName=Cluster0",
         },
-    }    
+    },
 }
 
 
@@ -147,3 +148,19 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# Celery settings
+CELERY_BEAT_SCHEDULE = {
+    "backup-songs-every-6-hours": {
+        "task": "proxyapp.tasks.scheduled_backup",  # Adjust to your app name
+        "schedule": 60 * 60 * 6,  # 6 hours in seconds
+        "kwargs": {"full": False},  # Default to incremental backup
+    },
+    # You could add another entry for weekly full backups
+    "full-backup-weekly": {
+        "task": "proxyapp.tasks.scheduled_backup",
+        "schedule": 60 * 60 * 24 * 7,  # 7 days in seconds
+        "kwargs": {"full": True},
+    },
+}
+
+# uri http://192.168.76.138:8000/api/backup/

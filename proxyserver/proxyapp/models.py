@@ -38,22 +38,4 @@ class Song(models.Model):
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES)
     # downloaded
     # n-view
-    
-class SongBackup(models.Model):
-    channelName = models.CharField(max_length=100)
-    currentTime = models.CharField(max_length=10)
-    duration = models.CharField(max_length=10)
-    savedAt = models.DateTimeField()
-    title = models.CharField(max_length=100)
-    url = models.URLField()
-    videoId = models.CharField(max_length=100)
-    category = models.CharField(max_length=10)
 
-    def __str__(self):
-        return self.title
-    
-class BackupStatus(models.Model):
-    last_backup = models.DateTimeField()
-
-    def __str__(self):
-        return f"Last Backup: {self.last_backup}"        

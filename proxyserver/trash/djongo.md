@@ -297,3 +297,271 @@ This will trigger the incremental backup and ensure only new or updated songs ar
 Now, your Django app will perform **incremental backups** to MongoDB Atlas, only backing up **new or modified songs** since the last backup. The `BackupStatus` model ensures you’re always backing up the right songs.
 
 Let me know if you need more help or further customizations! 🚀
+
+
+---
+---
+
+Yes! Your username **"mutai"** is being misinterpreted as the port number. This typically happens when there's an **issue with how the connection string is formatted** in your `settings.py`.  
+
+### **Why This Happens?**
+MongoDB's connection string follows this pattern:  
+```
+mongodb+srv://USERNAME:PASSWORD@cluster.mongodb.net/DB_NAME?options
+```
+If your username or password contains **special characters** like `@`, `:`, or `/`, they must be **URL-encoded**, or MongoDB will misinterpret them.
+
+---
+
+### **✅ Steps to Fix It**
+
+#### **1. URL-Encode Your Username & Password**
+- If your **username is `mutai`** and your **password is `p@ssw:rd`**, you must **URL-encode special characters**:
+  - `@` → `%40`
+  - `:` → `%3A`
+  - `/` → `%2F`
+
+- Example: If your **password** is `mutai@123`, it should be written as:
+  ```
+  mutai%40123
+  ```
+
+✅ **Correct example:**
+```python
+"CLIENT": {
+    "host": "mongodb+srv://mutai:mutai%40123@cluster0.ch21p.mongodb.net/Youflix?retryWrites=true&w=majority",
+}
+```
+
+---
+
+#### **2. Validate Your Connection String**
+Before running your Django command, **test your MongoDB connection** manually with `pymongo`:
+
+```python
+import pymongo
+
+uri = "mongodb+srv://mutai:mutai%40123@cluster0.ch21p.mongodb.net/Youflix?retryWrites=true&w=majority"
+
+try:
+    client = pymongo.MongoClient(uri)
+    db_info = client.server_info()
+    print(f"Connected to MongoDB! Version: {db_info['version']}")
+except Exception as e:
+    print(f"Connection failed: {e}")
+```
+✅ **If this works**, your issue is in how `djongo` handles the connection.
+
+---
+
+#### **3. Update `settings.py`**
+Ensure your **database settings** are correctly defined:
+```python
+DATABASES = {
+    "backup": {
+        "ENGINE": "djongo",
+        "NAME": "Youflix",
+        "CLIENT": {
+            "host": "mongodb+srv://mutai:mutai%40123@cluster0.ch21p.mongodb.net/Youflix?retryWrites=true&w=majority",
+        },
+    }
+}
+```
+
+---
+
+#### **4. Restart Your Django App**
+After fixing the settings, restart your Django project:
+```sh
+python manage.py runserver
+```
+Then test the connection:
+```sh
+python manage.py test_mongo
+```
+
+---
+### **🚀 Expected Output**
+If everything is correct, you should see:
+```sh
+Successfully connected to MongoDB Atlas
+MongoDB version: 5.0.14
+Collections in database: users, videos, playlists
+```
+
+---
+### **✅ Summary**
+✔ URL-encode special characters in **username/password**  
+✔ Test connection manually using `pymongo`  
+✔ Update `settings.py` with the **correct connection string**  
+✔ Restart Django & test again  
+
+Try this and let me know if you still get an error! 🚀
+
+### Here's how we can approach this:
+
+1. **Manual backup via the Django command**: You're already using this part to back up songs manually using a Django management command.
+2. **API request-based backup**: This involves creating an API endpoint that triggers the backup when needed.
+3. **Automating the backup process**: We can use Django's built-in **`crontab`** or **`Celery`** for scheduling the automated backup every 6 hours.
+
+---
+
+### **1. API Request to Trigger Backup**
+
+We'll expose an API endpoint that triggers this backup process. First, you'll need to add a new view that calls your backup logic.
+
+#### **Create the API Endpoint**
+
+1. **Create a view** to handle the backup API request:
+```python
+# views.py
+from django.http import JsonResponse
+from django.core.management import call_command
+
+def trigger_backup(request):
+    try:
+        # Call the management command directly via API
+        call_command('backup_songs')  # Name of your backup command
+        
+        return JsonResponse({"status": "success", "message": "Backup started!"}, status=200)
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+```
+
+2. **Add URL routing** for the backup endpoint:
+```python
+# urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('api/backup/', views.trigger_backup, name='trigger_backup'),
+]
+```
+
+---
+
+### **2. Automating the Backup Process**
+
+You have two main ways to schedule tasks in Django: **Crontab** or **Celery**. Let's go over both options:
+
+#### **A. Using Django-crontab (Simple Cron Job)**
+
+If you prefer not to use Celery, **Django-crontab** allows you to schedule management commands.
+
+1. **Install Django-crontab**:
+   ```sh
+   pip install django-crontab
+   ```
+
+2. **Add it to `INSTALLED_APPS` in `settings.py`**:
+   ```python
+   INSTALLED_APPS = [
+       ...,
+       'django_crontab',
+   ]
+   ```
+
+3. **Set up a cron job to run every 6 hours**:
+   You can schedule the backup command to run every 6 hours by adding it to `CRONJOBS` in your `settings.py`:
+   ```python
+   CRONJOBS = [
+       ('0 */6 * * *', 'django.core.management.call_command', ['backup_songs']),
+   ]
+   ```
+
+4. **Apply the cron jobs**:
+   Run this command to add the cron jobs:
+   ```sh
+   python manage.py crontab add
+   ```
+
+5. **Check and remove cron jobs**:
+   If needed, you can list the scheduled jobs or remove them with:
+   ```sh
+   python manage.py crontab show
+   python manage.py crontab remove
+   ```
+
+#### **B. Using Celery for Task Scheduling (Advanced Option)**
+
+If you're dealing with complex tasks or want better control over task scheduling, **Celery** is a more powerful solution.
+
+1. **Install Celery** and **Redis** (used as the message broker):
+   ```sh
+   pip install celery[redis]
+   ```
+
+2. **Create a Celery app** (`celery.py`):
+   ```python
+   # your_project/celery.py
+   from __future__ import absolute_import, unicode_literals
+   import os
+   from celery import Celery
+
+   # set the default Django settings module for the 'celery' program.
+   os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'your_project.settings')
+
+   app = Celery('your_project')
+
+   # Using a string here means the worker doesn't have to serialize
+   # the configuration object to child processes.
+   app.config_from_object('django.conf:settings', namespace='CELERY')
+
+   # Load task modules from all registered Django app configs.
+   app.autodiscover_tasks()
+   ```
+
+3. **Configure Celery in `settings.py`**:
+   ```python
+   CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis as the broker
+   CELERY_ACCEPT_CONTENT = ['json']
+   CELERY_TASK_SERIALIZER = 'json'
+   ```
+
+4. **Create a Celery task** for the backup:
+   ```python
+   # tasks.py
+   from celery import shared_task
+   from django.core.management import call_command
+
+   @shared_task
+   def backup_songs():
+       try:
+           call_command('backup_songs')  # Name of your backup command
+           return "Backup started!"
+       except Exception as e:
+           return f"Backup failed: {str(e)}"
+   ```
+
+5. **Schedule the task in `settings.py`**:
+   You can use Celery's **periodic tasks** to schedule the backup every 6 hours.
+   ```python
+   from celery.schedules import crontab
+
+   CELERY_BEAT_SCHEDULE = {
+       'backup_songs_every_6_hours': {
+           'task': 'your_project.tasks.backup_songs',
+           'schedule': crontab(minute=0, hour='*/6'),  # Every 6 hours
+       },
+   }
+   ```
+
+6. **Run Celery workers**:
+   First, run **Celery worker** and **beat**:
+   ```sh
+   celery -A your_project worker --loglevel=info
+   celery -A your_project beat --loglevel=info
+   ```
+
+7. **Testing the setup**: You can manually trigger a backup via the API endpoint, and Celery will automatically handle the scheduled backups.
+
+---
+
+### **Summary**
+
+- **Manual Backup**: You already have a working Django management command.
+- **API-based Trigger**: Use Django views to call the management command, triggering the backup through an API endpoint.
+- **Automated Backup**: You can use **Django-crontab** for simple scheduling or **Celery** for more control and scalability.
+
+Let me know if you'd like to go deeper into any of these setups! 😄
